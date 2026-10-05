@@ -1,0 +1,43 @@
+# Render Blueprint —— 前后端分离计算器系统（后端）
+#
+# 用法：
+#   1. 把本仓库推送到 GitHub；
+#   2. Render 控制台 → New → Blueprint → 选择本仓库；
+#   3. Render 读取本文件后自动创建下面的 Web Service，无需手工填构建/启动命令，
+#      也无需修改本文件中的任何内容（不需要填仓库地址）。
+#
+# 说明：这个服务同时提供
+#   - REST API：/api/**
+#   - 前端页面：public/ 目录下的静态资源（由 scripts/sync-public.mjs 同步而来）
+# 因此助教只需要访问一个链接就能完成评测。
+# 前端仍然是通过 HTTP/JSON 调用 API 的独立单页应用，前后端分离架构没有被破坏；
+# 如果希望前端单独部署，请参考 docs/DEPLOYMENT.md 中的「分离部署」章节。
+
+services:
+  - type: web
+    name: 832402207-calculator-api
+    runtime: node
+    plan: free
+    region: singapore          # 国内访问延迟较低；可改为 oregon / frankfurt 等
+    branch: main
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "24.21.0"
+      - key: NODE_ENV
+        value: production
+      - key: ACCESS_LOG
+        value: "true"
+      # CORS：默认允许任意来源，便于前端独立部署时联调。
+      # 若前端已固定域名，建议收紧为具体域名，例如：
+      #   https://832402207-calculator-frontend.onrender.com
+      - key: CORS_ORIGIN
+        value: "*"
+      # SQLite 数据文件位置。注意：Render 免费实例的文件系统是临时的，
+      # 重新部署或实例被回收后 data/ 会被重置（历史记录清零）。
+      # 如需严格持久化：升级为付费实例并挂载 Disk，或改用托管数据库。
+      - key: DB_PATH
+        value: /opt/render/project/src/data/calculator.db

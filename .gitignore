@@ -1,0 +1,27 @@
+# 依赖目录（本项目没有任何第三方依赖，这里只是防止误提交）
+node_modules/
+
+# SQLite 数据文件：属于运行时数据，不应提交到仓库
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# 环境变量文件
+.env
+.env.local
+.env.*.local
+
+# 日志
+*.log
+npm-debug.log*
+
+# 编辑器与系统文件
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# 注意：public/ 目录**必须提交**。
+# 它是前端资源的部署副本，由 `npm run sync:public` 从
+# 832402207_calculator_frontend/src 同步而来，用于让后端单服务托管前端页面。

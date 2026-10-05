@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="前后端分离计算器系统 —— 表达式由后端安全解析计算，计算历史持久化到后端数据库。" />
+  <meta name="author" content="Zhijun Chen (832402207)" />
+  <title>科学计算器 · 前后端分离系统</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='14'%20fill='%234f8cff'/%3E%3Ctext%20x='32'%20y='45'%20font-size='34'%20font-family='monospace'%20font-weight='700'%20text-anchor='middle'%20fill='white'%3E%3D%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./css/theme.css" />
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+  <!-- 装饰性背景光斑，纯 CSS 实现，不依赖任何图片资源 -->
+  <div class="backdrop" aria-hidden="true">
+    <span class="backdrop__orb backdrop__orb--one"></span>
+    <span class="backdrop__orb backdrop__orb--two"></span>
+    <span class="backdrop__orb backdrop__orb--three"></span>
+    <span class="backdrop__grid"></span>
+  </div>
+
+  <div class="app">
+    <!-- ============================= 顶部栏 ============================= -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round">
+            <rect x="4.5" y="2.5" width="23" height="27" rx="5.5" />
+            <path d="M11 10h10M16 20v6M13 23h6" />
+          </svg>
+        </span>
+        <div class="brand__text">
+          <h1>科学计算器</h1>
+          <p>前端展示 · 后端计算 · 数据库持久化</p>
+        </div>
+      </div>
+
+      <div class="topbar__actions">
+        <span class="status" id="serverStatus" data-state="checking" title="后端服务健康状态">
+          <i class="status__dot" aria-hidden="true"></i>
+          <span class="status__text">检测中…</span>
+        </span>
+        <button type="button" class="icon-button" id="refreshAll" title="重新拉取后端数据" aria-label="重新拉取后端数据">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6" />
+          </svg>
+        </button>
+        <button type="button" class="icon-button" id="themeToggle" title="切换深色 / 浅色主题" aria-label="切换主题">
+          <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" />
+          </svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4.2" />
+            <path d="M12 2v2.6M12 19.4V22M2 12h2.6M19.4 12H22M4.9 4.9l1.9 1.9M17.2 17.2l1.9 1.9M19.1 4.9l-1.9 1.9M6.8 17.2l-1.9 1.9" />
+          </svg>
+        </button>
+        <button type="button" class="icon-button" id="helpButton" title="快捷键与语法帮助" aria-label="帮助">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M9.6 9.2a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .9-1 1.6v.4M12 17.2h.01" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ============================= 主体 ============================= -->
+    <main class="layout">
+      <!-- ---------------------- 计算器 ---------------------- -->
+      <section class="card calculator" aria-label="计算器">
+        <div class="screen" id="screen">
+          <div class="screen__head">
+            <span class="chip chip--engine">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <path d="M4 7h16M4 12h16M4 17h10" />
+              </svg>
+              结果由后端计算
+            </span>
+            <span class="screen__tip" id="screenTip">支持 (1+2)*3 · sin(pi/6) · 5! · 2^10</span>
+          </div>
+
+          <label class="screen__inputWrap">
+            <span class="visually-hidden">计算表达式</span>
+            <input
+              id="expressionInput"
+              class="screen__input"
+              type="text"
+              inputmode="text"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="输入表达式，例如 (1+2)*3"
+              aria-describedby="screenMessage"
+            />
+          </label>
+
+          <div class="screen__result" id="resultBox" aria-live="polite">
+            <span class="screen__equals">=</span>
+            <output class="screen__value" id="resultValue">0</output>
+            <button type="button" class="copy-result" id="copyResult" title="复制结果">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="11" height="11" rx="2.5" />
+                <path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H16" />
+              </svg>
+            </button>
+          </div>
+
+          <p class="screen__message" id="screenMessage">
+            <span class="screen__messageText">等待输入…</span>
+          </p>
+        </div>
+
+        <!-- 科学函数快捷区 -->
+        <div class="scifi" id="sciPanel" aria-label="科学函数">
+          <button type="button" class="key key--fn" data-insert="sin(">sin</button>
+          <button type="button" class="key key--fn" data-insert="cos(">cos</button>
+          <button type="button" class="key key--fn" data-insert="tan(">tan</button>
+          <button type="button" class="key key--fn" data-insert="ln(">ln</button>
+          <button type="button" class="key key--fn" data-insert="log(">log</button>
+          <button type="button" class="key key--fn" data-insert="sqrt(">√</button>
+          <button type="button" class="key key--fn" data-insert="abs(">|x|</button>
+          <button type="button" class="key key--fn" data-insert="pi">π</button>
+          <button type="button" class="key key--fn" data-insert="e">e</button>
+          <button type="button" class="key key--fn" data-insert="^">xʸ</button>
+          <button type="button" class="key key--fn" data-insert="!">n!</button>
+          <button type="button" class="key key--fn" data-insert="%">mod</button>
+        </div>
+
+        <!-- 主键盘 -->
+        <div class="keypad" id="keypad">
+          <button type="button" class="key key--action" data-action="clear">C</button>
+          <button type="button" class="key key--action" data-insert="(">(</button>
+          <button type="button" class="key key--action" data-insert=")">)</button>
+          <button type="button" class="key key--action" data-action="backspace" aria-label="退格">
+            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 5h9.5A2.5 2.5 0 0 1 21 7.5v9a2.5 2.5 0 0 1-2.5 2.5H9L3 12z" />
+              <path d="M12.5 9.5l5 5M17.5 9.5l-5 5" />
+            </svg>
+          </button>
+
+          <button type="button" class="key key--num" data-insert="7">7</button>
+          <button type="button" class="key key--num" data-insert="8">8</button>
+          <button type="button" class="key key--num" data-insert="9">9</button>
+          <button type="button" class="key key--op" data-insert="÷">÷</button>
+
+          <button type="button" class="key key--num" data-insert="4">4</button>
+          <button type="button" class="key key--num" data-insert="5">5</button>
+          <button type="button" class="key key--num" data-insert="6">6</button>
+          <button type="button" class="key key--op" data-insert="×">×</button>
+
+          <button type="button" class="key key--num" data-insert="1">1</button>
+          <button type="button" class="key key--num" data-insert="2">2</button>
+          <button type="button" class="key key--num" data-insert="3">3</button>
+          <button type="button" class="key key--op" data-insert="-">−</button>
+
+          <button type="button" class="key key--num" data-insert="0">0</button>
+          <button type="button" class="key key--num" data-insert=".">.</button>
+          <button type="button" class="key key--action" data-action="negate">±</button>
+          <button type="button" class="key key--op" data-insert="+">+</button>
+
+          <button type="button" class="key key--equals" data-action="calculate">
+            <span>计算</span>
+            <kbd>Enter</kbd>
+          </button>
+        </div>
+
+        <div class="calculator__foot">
+          <button type="button" class="ghost-button" id="shareButton" title="把当前表达式生成为分享链接">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" />
+              <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" />
+            </svg>
+            分享此算式
+          </button>
+          <span class="calculator__hint">
+            按下 <kbd>Enter</kbd> 计算 · <kbd>Esc</kbd> 清空 · 结果与历史记录全部来自后端
+          </span>
+        </div>
+      </section>
+
+      <!-- ---------------------- 侧栏：历史 / 统计 / 换算 ---------------------- -->
+      <aside class="card side" aria-label="计算历史与扩展功能">
+        <div class="tabs" role="tablist">
+          <button type="button" class="tabs__item is-active" role="tab" aria-selected="true" data-tab="history">
+            历史记录 <span class="tabs__badge" id="historyCount">0</span>
+          </button>
+          <button type="button" class="tabs__item" role="tab" aria-selected="false" data-tab="stats">统计</button>
+          <button type="button" class="tabs__item" role="tab" aria-selected="false" data-tab="convert">单位换算</button>
+        </div>
+
+        <!-- 历史面板 -->
+        <section class="panel is-active" data-panel="history" role="tabpanel">
+          <div class="toolbar">
+            <label class="search">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <circle cx="11" cy="11" r="7" />
+                <path d="M20 20l-3.2-3.2" />
+              </svg>
+              <input type="search" id="historySearch" placeholder="搜索表达式或结果（按 / 聚焦）" autocomplete="off" />
+            </label>
+            <div class="toolbar__filters">
+              <button type="button" class="chip-toggle is-active" id="filterAll">全部</button>
+              <button type="button" class="chip-toggle" id="filterFavorite">★ 收藏</button>
+            </div>
+          </div>
+
+          <ul class="history" id="historyList" aria-live="polite"></ul>
+
+          <div class="empty" id="historyEmpty" hidden>
+            <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3.5" y="3.5" width="17" height="17" rx="4" />
+              <path d="M8 9h8M8 13h5" />
+            </svg>
+            <p class="empty__title">还没有计算记录</p>
+            <p class="empty__text">在上方输入表达式并点击「计算」，记录会保存到后端数据库。</p>
+          </div>
+
+          <footer class="panel__foot">
+            <div class="pager">
+              <button type="button" class="icon-button icon-button--sm" id="prevPage" aria-label="上一页">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6l-6 6 6 6" /></svg>
+              </button>
+              <span class="pager__label" id="pageLabel">第 1 / 1 页</span>
+              <button type="button" class="icon-button icon-button--sm" id="nextPage" aria-label="下一页">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6" /></svg>
+              </button>
+            </div>
+            <div class="panel__footActions">
+              <button type="button" class="ghost-button ghost-button--sm" id="exportButton" title="导出 CSV（后端生成）">导出 CSV</button>
+              <button type="button" class="ghost-button ghost-button--sm ghost-button--danger" id="clearButton">清空全部</button>
+            </div>
+          </footer>
+        </section>
+
+        <!-- 统计面板 -->
+        <section class="panel" data-panel="stats" role="tabpanel" hidden>
+          <div class="stat-grid">
+            <div class="stat">
+              <span class="stat__label">累计计算</span>
+              <strong class="stat__value" id="statTotal">0</strong>
+              <span class="stat__unit">条</span>
+            </div>
+            <div class="stat">
+              <span class="stat__label">今日计算</span>
+              <strong class="stat__value" id="statToday">0</strong>
+              <span class="stat__unit">条</span>
+            </div>
+            <div class="stat">
+              <span class="stat__label">收藏记录</span>
+              <strong class="stat__value" id="statFavorite">0</strong>
+              <span class="stat__unit">条</span>
+            </div>
+            <div class="stat">
+              <span class="stat__label">不重复算式</span>
+              <strong class="stat__value" id="statDistinct">0</strong>
+              <span class="stat__unit">个</span>
+            </div>
+          </div>
+
+          <h3 class="section-title">最近 7 天计算趋势</h3>
+          <div class="chart" id="trendChart" role="img" aria-label="最近 7 天计算次数柱状图"></div>
+
+          <h3 class="section-title">最常使用的算式</h3>
+          <ol class="ranking" id="topExpressions"></ol>
+        </section>
+
+        <!-- 单位换算面板 -->
+        <section class="panel" data-panel="convert" role="tabpanel" hidden>
+          <p class="panel__lead">
+            单位换算同样由后端接口 <code>POST /api/convert</code> 完成，前端只负责展示。
+          </p>
+
+          <div class="field">
+            <label class="field__label" for="convertCategory">换算类别</label>
+            <select class="input" id="convertCategory"></select>
+          </div>
+
+          <div class="convert-row">
+            <div class="field">
+              <label class="field__label" for="convertFromUnit">源单位</label>
+              <select class="input" id="convertFromUnit"></select>
+            </div>
+            <button type="button" class="swap-button" id="convertSwap" title="交换源单位与目标单位" aria-label="交换单位">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 4L3.5 7.5 7 11M3.5 7.5H16M17 20l3.5-3.5L17 13M20.5 16.5H8" />
+              </svg>
+            </button>
+            <div class="field">
+              <label class="field__label" for="convertToUnit">目标单位</label>
+              <select class="input" id="convertToUnit"></select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="convertValue">数值</label>
+            <input class="input" id="convertValue" type="text" inputmode="decimal" value="1" autocomplete="off" />
+          </div>
+
+          <div class="convert-result">
+            <span class="convert-result__label">换算结果</span>
+            <output class="convert-result__value" id="convertResult">—</output>
+            <span class="convert-result__desc" id="convertDesc"></span>
+          </div>
+
+          <button type="button" class="primary-button" id="convertButton">换算</button>
+        </section>
+      </aside>
+    </main>
+
+    <footer class="footer">
+      <p>
+        软件工程第一次作业 · 前后端分离计算器系统 ·
+        前端 <code>静态单页应用</code> ⇄ <code>HTTP / JSON</code> ⇄ 后端 <code>Node.js + SQLite</code>
+      </p>
+      <p class="footer__dim">
+        学号 832402207 · Zhijun Chen · 计算历史保存在后端数据库，刷新或重启前端不会丢失
+      </p>
+    </footer>
+  </div>
+
+  <!-- 提示气泡容器 -->
+  <div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- 帮助对话框 -->
+  <dialog class="dialog" id="helpDialog">
+    <div class="dialog__head">
+      <h2>语法与快捷键</h2>
+      <button type="button" class="icon-button icon-button--sm" id="helpClose" aria-label="关闭">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+      </button>
+    </div>
+    <div class="dialog__body">
+      <h3>后端支持的语法</h3>
+      <ul class="syntax-list" id="syntaxList"></ul>
+      <h3>支持的函数</h3>
+      <div class="function-grid" id="functionGrid"></div>
+      <h3>快捷键</h3>
+      <dl class="shortcuts">
+        <div><dt><kbd>0-9</kbd> <kbd>+</kbd> <kbd>-</kbd> <kbd>*</kbd> <kbd>/</kbd></dt><dd>直接输入</dd></div>
+        <div><dt><kbd>Enter</kbd></dt><dd>提交计算（由后端返回结果）</dd></div>
+        <div><dt><kbd>Esc</kbd></dt><dd>清空输入</dd></div>
+        <div><dt><kbd>Backspace</kbd></dt><dd>删除最后一个字符</dd></div>
+        <div><dt><kbd>/</kbd></dt><dd>聚焦历史搜索框</dd></div>
+        <div><dt><kbd>Ctrl</kbd> + <kbd>D</kbd></dt><dd>切换深色 / 浅色主题</dd></div>
+      </dl>
+    </div>
+  </dialog>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>

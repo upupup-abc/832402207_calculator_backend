@@ -1,0 +1,128 @@
+/* ==========================================================================
+   theme.css —— 设计令牌（Design Tokens）
+   --------------------------------------------------------------------------
+   把颜色、圆角、阴影、字体等「视觉常量」集中在一处，通过 CSS 自定义属性
+   暴露给 styles.css 使用。切换主题时只需替换 :root[data-theme] 上的令牌，
+   组件样式一行都不用改。
+
+   参考标准：Google HTML/CSS Style Guide —— 类名使用小写与连字符；
+             BEM 风格的「块__元素--修饰符」命名由 styles.css 使用。
+   ========================================================================== */
+
+:root {
+  /* 字体：不引入任何网络字体，保证离线与内网环境同样可用 */
+  --font-sans: "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Cascadia Mono", "JetBrains Mono", Consolas, "SF Mono", Menlo,
+    "Liberation Mono", monospace;
+
+  /* 尺寸与节奏 */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 26px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 22px;
+  --space-6: 30px;
+
+  /* 动效 */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration: 180ms;
+
+  /* 布局 */
+  --page-max: 1280px;
+}
+
+/* --------------------------------------------------------------------------
+   深色主题（默认）
+   -------------------------------------------------------------------------- */
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg-base: #070b16;
+  --bg-deep: #04070f;
+
+  --surface-1: rgba(21, 30, 52, 0.72);
+  --surface-2: rgba(28, 39, 66, 0.78);
+  --surface-3: rgba(38, 52, 84, 0.62);
+  --surface-solid: #131c31;
+  --surface-screen: linear-gradient(160deg, rgba(15, 23, 42, 0.92), rgba(11, 18, 36, 0.96));
+
+  --border-soft: rgba(125, 155, 220, 0.16);
+  --border-strong: rgba(140, 172, 240, 0.3);
+
+  --text-1: #eef3ff;
+  --text-2: #a3b3d4;
+  --text-3: #6f80a3;
+
+  --accent: #4f8cff;
+  --accent-soft: rgba(79, 140, 255, 0.16);
+  --accent-2: #a78bfa;
+  --accent-glow: rgba(79, 140, 255, 0.45);
+
+  --success: #34e0a1;
+  --success-soft: rgba(52, 224, 161, 0.14);
+  --warning: #ffc857;
+  --danger: #ff6b81;
+  --danger-soft: rgba(255, 107, 129, 0.14);
+
+  --key-bg: rgba(32, 44, 72, 0.72);
+  --key-bg-hover: rgba(46, 62, 98, 0.92);
+  --key-border: rgba(130, 160, 225, 0.14);
+  --key-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 6px 16px rgba(0, 0, 0, 0.28);
+
+  --shadow-card: 0 24px 60px rgba(2, 6, 18, 0.55);
+  --shadow-pop: 0 18px 40px rgba(2, 6, 18, 0.6);
+
+  --result-gradient: linear-gradient(96deg, #7fb2ff 0%, #a78bfa 52%, #67e8f9 100%);
+  --orb-opacity: 0.5;
+}
+
+/* --------------------------------------------------------------------------
+   浅色主题
+   -------------------------------------------------------------------------- */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg-base: #eef2fb;
+  --bg-deep: #e3e9f7;
+
+  --surface-1: rgba(255, 255, 255, 0.82);
+  --surface-2: rgba(255, 255, 255, 0.92);
+  --surface-3: rgba(237, 242, 253, 0.9);
+  --surface-solid: #ffffff;
+  --surface-screen: linear-gradient(160deg, #ffffff, #f3f7ff);
+
+  --border-soft: rgba(45, 74, 140, 0.13);
+  --border-strong: rgba(45, 74, 140, 0.26);
+
+  --text-1: #101a33;
+  --text-2: #4a5b7d;
+  --text-3: #7c8bab;
+
+  --accent: #2563eb;
+  --accent-soft: rgba(37, 99, 235, 0.12);
+  --accent-2: #7c3aed;
+  --accent-glow: rgba(37, 99, 235, 0.28);
+
+  --success: #0f9d6e;
+  --success-soft: rgba(15, 157, 110, 0.12);
+  --warning: #b45309;
+  --danger: #dc2626;
+  --danger-soft: rgba(220, 38, 38, 0.1);
+
+  --key-bg: rgba(255, 255, 255, 0.9);
+  --key-bg-hover: #ffffff;
+  --key-border: rgba(45, 74, 140, 0.16);
+  --key-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 6px 14px rgba(30, 58, 138, 0.09);
+
+  --shadow-card: 0 20px 48px rgba(30, 58, 138, 0.13);
+  --shadow-pop: 0 16px 34px rgba(30, 58, 138, 0.18);
+
+  --result-gradient: linear-gradient(96deg, #1d4ed8 0%, #7c3aed 55%, #0891b2 100%);
+  --orb-opacity: 0.34;
+}

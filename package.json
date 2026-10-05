@@ -1,0 +1,28 @@
+{
+  "name": "calculator-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "前后端分离计算器系统 —— 后端服务（表达式解析计算 + 计算历史持久化）",
+  "type": "module",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=22.13.0 <25.0.0"
+  },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning src/server.js",
+    "dev": "node --watch --disable-warning=ExperimentalWarning src/server.js",
+    "test": "node --disable-warning=ExperimentalWarning --test --test-isolation=none \"test/*.test.js\"",
+    "sync:public": "node scripts/sync-public.mjs",
+    "seed:demo": "node --disable-warning=ExperimentalWarning scripts/seed-demo.mjs"
+  },
+  "keywords": [
+    "calculator",
+    "frontend-backend-separation",
+    "rest-api",
+    "sqlite"
+  ],
+  "author": "Zhijun Chen (832402207)",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {}
+}
